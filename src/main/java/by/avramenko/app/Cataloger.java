@@ -1,11 +1,24 @@
+package by.avramenko.app;
+
 import com.mpatric.mp3agic.ID3v2;
 import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.Mp3File;
 import com.mpatric.mp3agic.UnsupportedTagException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.TreeMap;
+import java.util.zip.CRC32;
+import java.util.zip.CheckedInputStream;
+import java.util.zip.Checksum;
+import org.apache.commons.codec.digest.*;
 
 public class Cataloger {
 
@@ -18,17 +31,17 @@ public class Cataloger {
             "<title>Catalog</title>\n" +
             "</head>\n";
 
-    private final String HTML = "<body>\n";
-    private final String HTML_END = "</body>\n";
-    private final String BODY = "<body>\n";
+    private final String HTML = "<html>\n";
+    private final String HTML_END = "</html>\n";
+    private final String BODY = "<body style=\"font: 12pt sans-serif\">\n";
     private final String BODY_END = "</body>\n";
 
     private final String UL = "<ul type=\"none\">\n";
     private final String UL_END = "</ul>\n";
-    private final String LI = "<li>\n";
+    private final String LI = "<li>";
     private final String LI_END = "</li>\n";
 
-    private final String B = "<b>\n";
+    private final String B = "<b>";
     private final String B_END = "</b>\n";
 
     public Cataloger(String path){
@@ -37,18 +50,15 @@ public class Cataloger {
     }
 
 
-    public void parseDirectories () throws InvalidDataException, IOException, UnsupportedTagException {
+    public void parseDirectories () throws InvalidDataException, IOException, UnsupportedTagException, NoSuchAlgorithmException {
         File directory = new File(path);
         ArrayList<File> files = listFilesForFolder(directory);
         for(File file:files) {
+
             Mp3File mp3file = new Mp3File(file);
             if (mp3file.hasId3v2Tag()) {
                 ID3v2 id3v2Tag = mp3file.getId3v2Tag();
                 Song song = new Song(id3v2Tag.getTitle(),file.getPath(),id3v2Tag.getAlbum(),mp3file.getLengthInSeconds());
-                /*System.out.println("Track: " + id3v2Tag.getTrack());
-                System.out.println("Artist: " + id3v2Tag.getArtist());
-                System.out.println("Title: " + id3v2Tag.getTitle());
-                System.out.println("Album: " + id3v2Tag.getAlbum());*/
                 if(performers.get(id3v2Tag.getArtist())!=null)
                     performers.get(id3v2Tag.getArtist()).addSong(song);
                 else
@@ -56,6 +66,22 @@ public class Cataloger {
             }
 
         }
+        for(int i = 0; i<files.size()-1;i++) {
+            InputStream is1 = Files.newInputStream(Paths.get(files.get(i).getPath()));
+            String md51 = DigestUtils.md5Hex(is1);
+            for (int j = i + 1; j < files.size(); j++) {
+                //MessageDigest md = MessageDigest.getInstance("MD5");
+                InputStream is2 = Files.newInputStream(Paths.get(files.get(j).getPath()));
+
+                //DigestInputStream dis = new DigestInputStream(is, md);
+                //byte[] digest = md.digest();
+                String md52 = DigestUtils.md5Hex(is2);
+                if(md51.equals(md52))
+                System.out.println(md51);
+//                log.error("Это сообщение ошибки");
+            }
+        }
+
         for(Performer performer:performers.values())
             System.out.println(performer.describe());
     }

@@ -1,8 +1,6 @@
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+package by.avramenko.app;
+
 import java.util.TreeMap;
-import java.util.stream.Collectors;
 
 public class Performer {
     private String name;
@@ -43,7 +41,7 @@ public class Performer {
     }
 
     public String describe(){
-        String string = "Performer: "+this.name+"\n";
+        String string = "Name: "+this.name+"\n";
         for(Album album:albums.values())
             string+=album.describe();
         return string;

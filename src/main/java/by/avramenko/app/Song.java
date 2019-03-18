@@ -1,10 +1,11 @@
+package by.avramenko.app;
+
 public class Song {
     private String name;
     private String path;
     private String nameAlbum;
     private long duration;
-//TODO длительность
-    public Song(){}
+
     public Song(String name, String path, String nameAlbum, long duration){
         this.name = name;
         this.path = path;
