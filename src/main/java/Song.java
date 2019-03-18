@@ -2,10 +2,10 @@ public class Song {
     private String name;
     private String path;
     private String nameAlbum;
-    private Float duration;
+    private long duration;
 //TODO длительность
     public Song(){}
-    public Song(String name, String path, String nameAlbum, float duration){
+    public Song(String name, String path, String nameAlbum, long duration){
         this.name = name;
         this.path = path;
         this.nameAlbum = nameAlbum;
@@ -35,14 +35,21 @@ public class Song {
         this.nameAlbum = nameAlbum;
     }
 
-    public float getDuration() {
+    public long getDuration() {
         return duration;
     }
 
-    public void setDuration(float duration) {
+    public void setDuration(long duration) {
         this.duration = duration;
     }
     public String describe(){
-        return "\t\tName: "+this.name+"; time: "+ Cataloger.durationToString(this.duration.toString())+"; ("+this.path +")\n";
+        return "\t\tName: "+this.name+"; time: "+ secondsToDuration(this.duration)+"; ("+this.path +")\n";
     }
+    public static String secondsToDuration(long seconds){
+        if(seconds%60<10)
+            return seconds/60+":0"+seconds%60;
+        else
+            return seconds/60+":"+seconds%60;
+    }
+
 }
