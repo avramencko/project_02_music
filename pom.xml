@@ -19,8 +19,15 @@
             </plugin>
         </plugins>
     </build>
+
     <!-- https://mvnrepository.com/artifact/org.apache.tika/tika-parsers -->
     <dependencies>
+        <dependency>
+            <groupId>com.mpatric</groupId>
+            <artifactId>mp3agic</artifactId>
+            <version>0.9.1</version>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-parsers</artifactId>
