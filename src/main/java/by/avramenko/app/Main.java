@@ -9,10 +9,12 @@ import java.security.NoSuchAlgorithmException;
 public class Main {
 
     public static void main(String[] args) throws IOException, InvalidDataException, UnsupportedTagException, NoSuchAlgorithmException {
-        String path = "D://Музыка/ccc";
+        String path = "D://Музыка";
         System.out.println(path);
         Cataloger cataloger = new Cataloger(path);
         cataloger.parseDirectories();
         cataloger.generateHTML(path,"index");
+        cataloger.generateHashCodeDuplicateList(path,"duplicates_1");
+        cataloger.generateNameDuplicateList(path,"duplicates_2");
     }
 }

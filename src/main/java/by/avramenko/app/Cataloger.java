@@ -4,26 +4,21 @@ import com.mpatric.mp3agic.ID3v2;
 import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.Mp3File;
 import com.mpatric.mp3agic.UnsupportedTagException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.security.DigestInputStream;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.TreeMap;
-import java.util.zip.CRC32;
-import java.util.zip.CheckedInputStream;
-import java.util.zip.Checksum;
-import org.apache.commons.codec.digest.*;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class Cataloger {
 
     private String path;
     private TreeMap<String, Performer> performers;
+    private ArrayList<File> files;
 
     private final String HEAD = "<head>\n" +
             "<meta charset=\"utf-8\">\n" +
@@ -47,46 +42,105 @@ public class Cataloger {
     public Cataloger(String path){
         this.path = path;
         this.performers = new TreeMap<>();
+        this.files = new ArrayList<>();
     }
 
 
-    public void parseDirectories () throws InvalidDataException, IOException, UnsupportedTagException, NoSuchAlgorithmException {
+    public void parseDirectories () throws InvalidDataException, IOException, UnsupportedTagException {
+        long startTime= System.currentTimeMillis();
         File directory = new File(path);
-        ArrayList<File> files = listFilesForFolder(directory);
-        for(File file:files) {
-
+        files = listFilesForFolder(directory);
+        for (File file : files) {
             Mp3File mp3file = new Mp3File(file);
             if (mp3file.hasId3v2Tag()) {
                 ID3v2 id3v2Tag = mp3file.getId3v2Tag();
-                Song song = new Song(id3v2Tag.getTitle(),file.getPath(),id3v2Tag.getAlbum(),mp3file.getLengthInSeconds());
-                if(performers.get(id3v2Tag.getArtist())!=null)
-                    performers.get(id3v2Tag.getArtist()).addSong(song);
+                String artist = (id3v2Tag.getArtist() != null) ? (id3v2Tag.getArtist()) : ("Неизвестный исполнитель");
+                String title = (id3v2Tag.getTitle() != null) ? (id3v2Tag.getTitle()) : ("Неизвестное название");
+                String album = (id3v2Tag.getAlbum() != null) ? (id3v2Tag.getAlbum()) : ("Неизвестный альбом");
+                Song song = new Song(title, file.getPath(), album, mp3file.getLengthInSeconds());
+                if (performers.get(artist) != null)
+                    performers.get(artist).addSong(song);
                 else
-                    performers.put(id3v2Tag.getArtist(),new Performer(id3v2Tag.getArtist(),song));
+                    performers.put(artist, new Performer(artist, song));
             }
 
         }
-        for(int i = 0; i<files.size()-1;i++) {
-            InputStream is1 = Files.newInputStream(Paths.get(files.get(i).getPath()));
-            String md51 = DigestUtils.md5Hex(is1);
-            for (int j = i + 1; j < files.size(); j++) {
-                //MessageDigest md = MessageDigest.getInstance("MD5");
-                InputStream is2 = Files.newInputStream(Paths.get(files.get(j).getPath()));
 
-                //DigestInputStream dis = new DigestInputStream(is, md);
-                //byte[] digest = md.digest();
-                String md52 = DigestUtils.md5Hex(is2);
-                if(md51.equals(md52))
-                System.out.println(md51);
-//                log.error("Это сообщение ошибки");
-            }
-        }
-
-        for(Performer performer:performers.values())
+        for (Performer performer : performers.values())
             System.out.println(performer.describe());
+
+        long finishTime= System.currentTimeMillis();
+        System.out.println("---------"+(finishTime-startTime)/1000);
+
+    }
+
+    public void generateNameDuplicateList(String path, String filename) throws FileNotFoundException, UnsupportedEncodingException {
+        PrintWriter writer = new PrintWriter(path+"/"+filename+".html", "UTF-8");
+        String strHtml = HTML+HEAD+BODY+ UL;
+
+        for(Performer performer:performers.values()){
+            for(Album album : performer.getAlbums().values()){
+                ArrayList<String> songsNames = new ArrayList<>();
+                album.getSongList().forEach(e-> songsNames.add(e.getName()));
+                List<Song> songs = album.getSongList().stream().filter(i -> Collections.frequency(songsNames, i.getName()) > 1)
+                        //.distinct()
+                        .collect(Collectors.toList());
+                if(!songs.isEmpty()) {
+                    strHtml += LI + B + performer.getName() + ", "+album.getName()+", " + songs.get(0).getName()+B_END + UL;
+                    for (Song song : songs) {
+                        if(song.getName().equals(songs.get(0).getName()))
+                        strHtml +=  LI + song.getPath() + LI_END ;
+                    }
+                    songs.remove(0);
+                    strHtml+=UL_END+LI_END;
+                }
+            }
+        }
+
+        strHtml += UL_END+BODY_END+HTML_END;
+        writer.println(strHtml);
+        writer.close();
+        System.out.println("HTML2 записана");
+    }
+    public void generateHashCodeDuplicateList(String path, String filename) throws IOException {
+        long startTime= System.currentTimeMillis();
+        HashMap<File, String> fileStringHashMap = new HashMap<>();
+        for (int i = 0; i < files.size() - 1; i++) {
+            fileStringHashMap.put(files.get(i), DigestUtils.md5Hex(Files.newInputStream(Paths.get(files.get(i).getPath()))));
+        }
+        List<String> duplicates = fileStringHashMap.values().stream()
+                .filter(i -> Collections.frequency(fileStringHashMap.values(), i) > 1)
+                .distinct()
+                .collect(Collectors.toList());
+        //System.out.println(duplicates.size());
+
+        PrintWriter writer = new PrintWriter(path+"/"+filename+".html", "UTF-8");
+
+        final String[] strHtml = {HTML + HEAD + BODY};
+        int k = 1;
+
+        for (String duplicate : duplicates) {
+            strHtml[0] += UL + LI + B + "Дубликаты-" + (k++) + B_END + UL;
+            fileStringHashMap.forEach((i, j) -> {
+                if (j.equals(duplicate)) {
+                    strHtml[0] += LI + i.getPath() + LI_END;
+
+                    System.out.println(i.getName());
+                }
+            });
+            strHtml[0] +=UL_END+LI_END +UL_END;
+        }
+        strHtml[0] +=BODY_END+HTML_END;
+        //System.out.println(strHtml[0]);
+        writer.println(strHtml[0]);
+        writer.close();
+        System.out.println("HTML 2 записана");
+        long finishTime= System.currentTimeMillis();
+        System.out.println((finishTime-startTime)/1000);
     }
 
     public void generateHTML(String path, String filename) throws FileNotFoundException, UnsupportedEncodingException {
+
         PrintWriter writer = new PrintWriter(path+"/"+filename+".html", "UTF-8");
         String strHtml = HTML+HEAD+BODY;
 
@@ -106,6 +160,7 @@ public class Cataloger {
         strHtml += BODY_END+HTML_END;
         writer.println(strHtml);
         writer.close();
+        System.out.println("HTML записана");
     }
 
     private ArrayList<File> listFilesForFolder(File folder){
@@ -120,6 +175,7 @@ public class Cataloger {
         }
         return files;
     }
+
 
 
 }

@@ -46,11 +46,11 @@ public class Song {
     public String describe(){
         return "\t\tName: "+this.name+"; time: "+ secondsToDuration(this.duration)+"; ("+this.path +")\n";
     }
-    public static String secondsToDuration(long seconds){
-        if(seconds%60<10)
-            return seconds/60+":0"+seconds%60;
+    public static String secondsToDuration(long seconds) {
+        if (seconds % 60 < 10)
+            return seconds / 60 + ":0" + seconds % 60;
         else
-            return seconds/60+":"+seconds%60;
+            return seconds / 60 + ":" + seconds % 60;
     }
 
 }

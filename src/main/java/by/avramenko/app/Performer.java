@@ -33,10 +33,11 @@ public class Performer {
     }
 
     public void addSong(Song song){
-        if(albums.get(song.getNameAlbum())!=null)
-            albums.get(song.getNameAlbum()).addSong(song);
+        String nameAlbum = song.getNameAlbum();
+        if(nameAlbum!=null&&albums.get(nameAlbum)!=null)
+            albums.get(nameAlbum).addSong(song);
         else {
-            albums.put(song.getNameAlbum(),new Album(song));
+            albums.put(nameAlbum,new Album(song));
         }
     }
 
