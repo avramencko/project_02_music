@@ -1,5 +1,8 @@
 package by.avramenko.app;
 
+import by.avramenko.app.Entities.Album;
+import by.avramenko.app.Entities.Performer;
+import by.avramenko.app.Entities.Song;
 import com.mpatric.mp3agic.ID3v2;
 import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.Mp3File;
@@ -7,10 +10,8 @@ import com.mpatric.mp3agic.UnsupportedTagException;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.*;
-import java.lang.reflect.Array;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -39,15 +40,16 @@ public class Cataloger {
     private final String B = "<b>";
     private final String B_END = "</b>\n";
 
-    public Cataloger(String path){
+    public Cataloger(String path) {
         this.path = path;
         this.performers = new TreeMap<>();
         this.files = new ArrayList<>();
     }
 
-
-    public void parseDirectories () throws InvalidDataException, IOException, UnsupportedTagException {
-        long startTime= System.currentTimeMillis();
+    //достает файлы mp3, считывает их теги, сохряняет в список performers -- исполнителей(сортировка по альбомам уже внутри performers)
+    //работает медленно
+    public void parseDirectories() throws InvalidDataException, IOException, UnsupportedTagException {
+        long startTime = System.currentTimeMillis();
         File directory = new File(path);
         files = listFilesForFolder(directory);
         for (File file : files) {
@@ -66,44 +68,47 @@ public class Cataloger {
 
         }
 
-        for (Performer performer : performers.values())
-            System.out.println(performer.describe());
+//        for (Performer performer : performers.values())
+//            System.out.println(performer.describe());
 
-        long finishTime= System.currentTimeMillis();
-        System.out.println("---------"+(finishTime-startTime)/1000);
+        long finishTime = System.currentTimeMillis();
+        System.out.println("---------" + (finishTime - startTime) / 1000 + "sec - parseDirectories()" + "---------");
 
     }
 
-    public void generateNameDuplicateList(String path, String filename) throws FileNotFoundException, UnsupportedEncodingException {
-        PrintWriter writer = new PrintWriter(path+"/"+filename+".html", "UTF-8");
-        String strHtml = HTML+HEAD+BODY+ UL;
+    //задание 1
+    // просто генерирование html со всеми песнями
 
-        for(Performer performer:performers.values()){
-            for(Album album : performer.getAlbums().values()){
-                ArrayList<String> songsNames = new ArrayList<>();
-                album.getSongList().forEach(e-> songsNames.add(e.getName()));
-                List<Song> songs = album.getSongList().stream().filter(i -> Collections.frequency(songsNames, i.getName()) > 1)
-                        //.distinct()
-                        .collect(Collectors.toList());
-                if(!songs.isEmpty()) {
-                    strHtml += LI + B + performer.getName() + ", "+album.getName()+", " + songs.get(0).getName()+B_END + UL;
-                    for (Song song : songs) {
-                        if(song.getName().equals(songs.get(0).getName()))
-                        strHtml +=  LI + song.getPath() + LI_END ;
-                    }
-                    songs.remove(0);
-                    strHtml+=UL_END+LI_END;
+    public void generateHTML(String path, String filename) throws FileNotFoundException, UnsupportedEncodingException {
+        long startTime = System.currentTimeMillis();
+        PrintWriter writer = new PrintWriter(path + "/" + filename + ".html", "UTF-8");
+        String strHtml = HTML + HEAD + BODY;
+
+        for (Performer performer : performers.values()) {
+            strHtml += UL + LI + B + performer.getName() + B_END + UL;
+            for (Album album : performer.getAlbums().values()) {
+                strHtml += LI + B + album.getName() + B_END + UL;
+                for (Song song : album.getSongList()) {
+                    strHtml += LI + song.getName() + " " + Song.secondsToDuration(song.getDuration())
+                            + "(<a href=\"file:///" + song.getPath() + "\">" + song.getPath() + "</a>)" + LI_END;
                 }
+                strHtml += UL_END + LI_END;
             }
+            strHtml += UL_END + LI_END + UL_END;
         }
 
-        strHtml += UL_END+BODY_END+HTML_END;
+        strHtml += BODY_END + HTML_END;
         writer.println(strHtml);
         writer.close();
-        System.out.println("HTML2 записана");
+        long finishTime = System.currentTimeMillis();
+        System.out.println("---------" + (finishTime - startTime) / 1000 + "sec - generateHTML()" + "---------");
     }
+
+    //задание 2
+    // поиск и запись(мб пока что в html) дубликатов по хеш-коду. капелька колдовства и некравивых имене переменных.
+    //работает медленно
     public void generateHashCodeDuplicateList(String path, String filename) throws IOException {
-        long startTime= System.currentTimeMillis();
+        long startTime = System.currentTimeMillis();
         HashMap<File, String> fileStringHashMap = new HashMap<>();
         for (int i = 0; i < files.size() - 1; i++) {
             fileStringHashMap.put(files.get(i), DigestUtils.md5Hex(Files.newInputStream(Paths.get(files.get(i).getPath()))));
@@ -112,9 +117,8 @@ public class Cataloger {
                 .filter(i -> Collections.frequency(fileStringHashMap.values(), i) > 1)
                 .distinct()
                 .collect(Collectors.toList());
-        //System.out.println(duplicates.size());
 
-        PrintWriter writer = new PrintWriter(path+"/"+filename+".html", "UTF-8");
+        PrintWriter writer = new PrintWriter(path + "/" + filename + ".html", "UTF-8");
 
         final String[] strHtml = {HTML + HEAD + BODY};
         int k = 1;
@@ -125,57 +129,62 @@ public class Cataloger {
                 if (j.equals(duplicate)) {
                     strHtml[0] += LI + i.getPath() + LI_END;
 
-                    System.out.println(i.getName());
+//                    System.out.println(i.getName());
                 }
             });
-            strHtml[0] +=UL_END+LI_END +UL_END;
+            strHtml[0] += UL_END + LI_END + UL_END;
         }
-        strHtml[0] +=BODY_END+HTML_END;
+        strHtml[0] += BODY_END + HTML_END;
         //System.out.println(strHtml[0]);
         writer.println(strHtml[0]);
         writer.close();
-        System.out.println("HTML 2 записана");
-        long finishTime= System.currentTimeMillis();
-        System.out.println((finishTime-startTime)/1000);
+        long finishTime = System.currentTimeMillis();
+        System.out.println("---------" + (finishTime - startTime) / 1000 + "sec - generateHashCodeDuplicateList()" + "---------");
     }
 
-    public void generateHTML(String path, String filename) throws FileNotFoundException, UnsupportedEncodingException {
+    //задание 3
+    // поиск и запись(мб пока что в html) дубликатов по названию, автору и альбому.
+    public void generateNameDuplicateList(String path, String filename) throws FileNotFoundException, UnsupportedEncodingException {
+        long startTime = System.currentTimeMillis();
+        PrintWriter writer = new PrintWriter(path + "/" + filename + ".html", "UTF-8");
+        String strHtml = HTML + HEAD + BODY + UL;
 
-        PrintWriter writer = new PrintWriter(path+"/"+filename+".html", "UTF-8");
-        String strHtml = HTML+HEAD+BODY;
-
-        for(Performer performer:performers.values()){
-            strHtml += UL+LI+B+performer.getName()+B_END+UL;
-            for(Album album : performer.getAlbums().values()){
-                strHtml += LI + B + album.getName() + B_END + UL;
-                for(Song song : album.getSongList()){
-                    strHtml += LI + song.getName() + " " + Song.secondsToDuration(song.getDuration())
-                            +"(<a href=\"file:///"+song.getPath()+"\">"+song.getPath()+"</a>)"+LI_END;
+        for (Performer performer : performers.values()) {
+            for (Album album : performer.getAlbums().values()) {
+                ArrayList<String> songsNames = new ArrayList<>();
+                album.getSongList().forEach(e -> songsNames.add(e.getName()));
+                List<Song> songs = album.getSongList().stream()
+                        .filter(i -> Collections.frequency(songsNames, i.getName()) > 1)
+                        .collect(Collectors.toList());
+                if (!songs.isEmpty()) {
+                    strHtml += LI + B + performer.getName() + ", " + album.getName() + ", " + songs.get(0).getName() + B_END + UL;
+                    for (Song song : songs) {
+                        if (song.getName().equals(songs.get(0).getName()))
+                            strHtml += LI + song.getPath() + LI_END;
+                    }
+                    songs.remove(0);
+                    strHtml += UL_END + LI_END;
                 }
-                strHtml += UL_END + LI_END;
             }
-            strHtml +=UL_END+ LI_END + UL_END;
         }
 
-        strHtml += BODY_END+HTML_END;
+        strHtml += UL_END + BODY_END + HTML_END;
         writer.println(strHtml);
         writer.close();
-        System.out.println("HTML записана");
+        long finishTime = System.currentTimeMillis();
+        System.out.println("---------" + (finishTime - startTime) / 1000 + "sec - generateNameDuplicateList()" + "---------");
     }
 
-    private ArrayList<File> listFilesForFolder(File folder){
+    private ArrayList<File> listFilesForFolder(File folder) {
         ArrayList<File> files = new ArrayList<>();
-        for(File fileEntry:folder.listFiles()){
-            if(fileEntry.isDirectory()){
+        for (File fileEntry : folder.listFiles()) {
+            if (fileEntry.isDirectory()) {
                 files.addAll(listFilesForFolder(fileEntry));
-            }else{
-                if(fileEntry.getName().endsWith(".mp3"))
+            } else {
+                if (fileEntry.getName().endsWith(".mp3"))
                     files.add(fileEntry);
             }
         }
         return files;
     }
-
-
-
 }

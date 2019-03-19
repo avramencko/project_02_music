@@ -1,4 +1,4 @@
-package by.avramenko.app;
+package by.avramenko.app.Entities;
 
 import java.util.TreeMap;
 
