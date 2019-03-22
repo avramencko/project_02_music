@@ -1,20 +1,15 @@
 package by.avramenko.app;
 
-import com.mpatric.mp3agic.InvalidDataException;
-import com.mpatric.mp3agic.UnsupportedTagException;
+import by.avramenko.app.Exceptions.IncorrectDirectoryException;
 
-import java.io.*;
-import java.security.NoSuchAlgorithmException;
 
 public class Main {
-
-    public static void main(String[] args) throws IOException, InvalidDataException, UnsupportedTagException, NoSuchAlgorithmException {
-        String path = "D://Музыка";
-        System.out.println(path);
+    public static void main(String[] args) throws IncorrectDirectoryException {
+        String[] path = args;
         Cataloger cataloger = new Cataloger(path);
         cataloger.parseDirectories();
-        cataloger.generateHTML(path,"index");
-        cataloger.generateHashCodeDuplicateList(path,"duplicates_1");
-        cataloger.generateNameDuplicateList(path,"duplicates_2");
+        cataloger.generateHTML(path[0],"index");
+        cataloger.generateHashCodeDuplicateList(path[0],"duplicates_1");
+        cataloger.generateNameDuplicateList(path[0],"duplicates_2");
     }
 }

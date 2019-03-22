@@ -33,7 +33,7 @@ public class Performer {
     }
 
     public void addSong(Song song){
-        String nameAlbum = song.getNameAlbum();
+        String nameAlbum = (song.getNameAlbum() != null) ? (song.getNameAlbum()) : ("Неизвестный альбом");
         if(nameAlbum!=null&&albums.get(nameAlbum)!=null)
             albums.get(nameAlbum).addSong(song);
         else {
