@@ -65,7 +65,7 @@ public class Cataloger {
                     String artist = (id3v2Tag.getArtist() != null) ? (id3v2Tag.getArtist()) : ("Неизвестный исполнитель");
                     String title = (id3v2Tag.getTitle() != null) ? (id3v2Tag.getTitle()) : ("Неизвестное название");
                     String album = (id3v2Tag.getAlbum() != null) ? (id3v2Tag.getAlbum()) : ("Неизвестный альбом");
-                    Song song = new Song(artist, title, file.getPath(), album, mp3file.getLengthInSeconds());
+                    Song song = new Song(title, file.getPath(), album, mp3file.getLengthInSeconds());
                     if (performers.get(artist) != null)
                         performers.get(artist).addSong(song);
                     else
@@ -76,14 +76,14 @@ public class Cataloger {
                     String artist = (id3v1Tag.getArtist() != null) ? (id3v1Tag.getArtist()) : ("Неизвестный исполнитель");
                     String title = (id3v1Tag.getTitle() != null) ? (id3v1Tag.getTitle()) : ("Неизвестное название");
                     String album = (id3v1Tag.getAlbum() != null) ? (id3v1Tag.getAlbum()) : ("Неизвестный альбом");
-                    Song song = new Song(artist, title, file.getPath(), album, mp3file.getLengthInSeconds());
+                    Song song = new Song(title, file.getPath(), album, mp3file.getLengthInSeconds());
                     if (performers.get(artist) != null)
                         performers.get(artist).addSong(song);
                     else
                         performers.put(artist, new Performer(artist, song));
 
                 } else {
-                    Song song = new Song("Неизвестный исполнитель","Неизвестное название", file.getPath(), "Неизвестный альбом", mp3file.getLengthInSeconds());
+                    Song song = new Song("Неизвестное название", file.getPath(), "Неизвестный альбом", mp3file.getLengthInSeconds());
                     if (performers.get("Неизвестный исполнитель") != null)
                         performers.get("Неизвестный исполнитель").addSong(song);
                     else
@@ -200,7 +200,6 @@ public class Cataloger {
 
             for (Performer performer : performers.values()) {
                 for (Album album : performer.getAlbums().values()) {
-                    //TODO дописать второй вариант
                     ArrayList<String> songsNames = new ArrayList<>();
                     album.getSongList().forEach(e -> songsNames.add(e.getName()));
                     List<Song> songs = album.getSongList().stream()

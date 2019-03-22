@@ -1,25 +1,24 @@
 package by.avramenko.app.Entities;
 
 public class Song {
-    private String artist;
     private String name;
     private String path;
     private String nameAlbum;
     private long duration;
 
-    /*public Song(String name, String path, String nameAlbum, long duration){
-        this.name = name;
-        this.path = path;
-        this.nameAlbum = nameAlbum;
-        this.duration = duration;
-    }*/
-    public Song(String artist, String name, String path, String nameAlbum, long duration) {
-        this.artist = artist;
+    public Song(String name, String path, String nameAlbum, long duration){
         this.name = name;
         this.path = path;
         this.nameAlbum = nameAlbum;
         this.duration = duration;
     }
+    /* Song(String artist, String name, String path, String nameAlbum, long duration) {
+        this.artist = artist;
+        this.name = name;
+        this.path = path;
+        this.nameAlbum = nameAlbum;
+        this.duration = duration;
+    }*/
 
     public String getPath() {
         return path;
@@ -53,14 +52,6 @@ public class Song {
         this.duration = duration;
     }
 
-    public String getArtist() {
-        return artist;
-    }
-
-    public void setArtist(String artist) {
-        this.artist = artist;
-    }
-
     public String describe() {
         return "\t\tName: " + this.name + "; time: " + secondsToDuration(this.duration) + "; (" + this.path + ")\n";
     }
@@ -71,13 +62,5 @@ public class Song {
         else
             return seconds / 60 + ":" + seconds % 60;
     }
-
-    public boolean equals(Song song) {
-        if (this.artist.equals(song.artist) && this.name.equals(song.name) && this.nameAlbum.equals(song.nameAlbum))
-            return true;
-        else
-            return false;
-    }
-
 
 }
