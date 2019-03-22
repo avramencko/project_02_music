@@ -39,9 +39,11 @@ public class Cataloger {
     private final String B_END = "</b>\n";
 
     public Cataloger(String[] path) throws IncorrectDirectoryException {
+        if(path.length==0)
+            throw new IncorrectDirectoryException("Choose directory correctly");
         for(String p:path) {
             if (!(new File(p).isDirectory()))
-                throw new IncorrectDirectoryException(path + "is not a directory");
+                throw new IncorrectDirectoryException(p + "is not a directory");
         }
         this.path = path;
         this.performers = new TreeMap<>();
@@ -52,7 +54,7 @@ public class Cataloger {
 
     public void parseDirectories() {
         long startTime = System.currentTimeMillis();
-        for(String p:path) {
+        for (String p : path) {
             File directory = new File(p);
 
             files.addAll(listFilesForFolder(directory));
@@ -60,36 +62,31 @@ public class Cataloger {
         for (File file : files) {
             try {
                 Mp3File mp3file = new Mp3File(file);
+                String artist;
+                String title;
+                String album;
                 if (mp3file.hasId3v2Tag()) {
                     ID3v2 id3v2Tag = mp3file.getId3v2Tag();
-                    String artist = (id3v2Tag.getArtist() != null) ? (id3v2Tag.getArtist()) : ("Неизвестный исполнитель");
-                    String title = (id3v2Tag.getTitle() != null) ? (id3v2Tag.getTitle()) : ("Неизвестное название");
-                    String album = (id3v2Tag.getAlbum() != null) ? (id3v2Tag.getAlbum()) : ("Неизвестный альбом");
-                    Song song = new Song(title, file.getPath(), album, mp3file.getLengthInSeconds());
-                    if (performers.get(artist) != null)
-                        performers.get(artist).addSong(song);
-                    else
-                        performers.put(artist, new Performer(artist, song));
-
+                    artist = (id3v2Tag.getArtist() != null) ? (id3v2Tag.getArtist()) : ("Неизвестный исполнитель");
+                    title = (id3v2Tag.getTitle() != null) ? (id3v2Tag.getTitle()) : ("Неизвестное название");
+                    album = (id3v2Tag.getAlbum() != null) ? (id3v2Tag.getAlbum()) : ("Неизвестный альбом");
                 } else if (mp3file.hasId3v1Tag()) {
                     ID3v1 id3v1Tag = mp3file.getId3v1Tag();
-                    String artist = (id3v1Tag.getArtist() != null) ? (id3v1Tag.getArtist()) : ("Неизвестный исполнитель");
-                    String title = (id3v1Tag.getTitle() != null) ? (id3v1Tag.getTitle()) : ("Неизвестное название");
-                    String album = (id3v1Tag.getAlbum() != null) ? (id3v1Tag.getAlbum()) : ("Неизвестный альбом");
-                    Song song = new Song(title, file.getPath(), album, mp3file.getLengthInSeconds());
-                    if (performers.get(artist) != null)
-                        performers.get(artist).addSong(song);
-                    else
-                        performers.put(artist, new Performer(artist, song));
-
+                    artist = (id3v1Tag.getArtist() != null) ? (id3v1Tag.getArtist()) : ("Неизвестный исполнитель");
+                    title = (id3v1Tag.getTitle() != null) ? (id3v1Tag.getTitle()) : ("Неизвестное название");
+                    album = (id3v1Tag.getAlbum() != null) ? (id3v1Tag.getAlbum()) : ("Неизвестный альбом");
                 } else {
-                    Song song = new Song("Неизвестное название", file.getPath(), "Неизвестный альбом", mp3file.getLengthInSeconds());
-                    if (performers.get("Неизвестный исполнитель") != null)
-                        performers.get("Неизвестный исполнитель").addSong(song);
-                    else
-                        performers.put("Неизвестный исполнитель", new Performer("Неизвестный исполнитель", song));
-
+                    artist = "Неизвестный исполнитель";
+                    title = "Неизвестное название";
+                    album = "Неизвестный альбом";
                 }
+
+                Song song = new Song(title, file.getPath(), album, mp3file.getLengthInSeconds());
+                if (performers.get(artist) != null)
+                    performers.get(artist).addSong(song);
+                else
+                    performers.put(artist, new Performer(artist, song));
+
             } catch (IllegalArgumentException ex) {
                 System.err.println("file " + file.getName() + "(" + file.getPath() + ")" + " is incorrect");
             } catch (IOException | UnsupportedTagException | InvalidDataException e) {
